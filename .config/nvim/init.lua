@@ -32,6 +32,28 @@ require("lazy").setup({
 	"williamboman/mason.nvim",
 	"williamboman/mason-lspconfig.nvim",
 	"neovim/nvim-lspconfig",
+	{
+        "mfussenegger/nvim-dap",
+        config = function()
+
+        end
+    },
+    {
+        "rcarriga/nvim-dap-ui",
+        dependencies = { "mfussenegger/nvim-dap", "nvim-neotest/nvim-nio" },
+        config = function()
+            require("dapui").setup()
+        end
+    },
+
+    {
+        "f-person/git-blame.nvim",
+        config = function()
+            require("gitblame").setup({
+                enabled = false
+            })
+        end
+    },
 
 	"hrsh7th/cmp-nvim-lsp",
 	"hrsh7th/nvim-cmp",
@@ -68,35 +90,6 @@ require("lazy").setup({
 	},
 	{ "kdheepak/lazygit.nvim", dependencies = { "nvim-lua/plenary.nvim" } },
 
-	-- {
-	--     "vhyrro/luarocks.nvim",
-	--     priority = 1000,
-	--     config = true,
-	-- },
-	-- {
-	--     "rest-nvim/rest.nvim",
-	--     ft = "http",
-	--     dependencies = { "luarocks.nvim" },
-	--     config = function()
-	--         require("rest-nvim").setup({
-	--             result = {
-	--                 behavior = {
-	--                     formatters = {
-	--                         json = "jq",
-	--                         html = function(body)
-	--                             return vim.fn.system({ "tidy", "-i", "-q", "-" }, body)
-	--                         end,
-	--                     },
-	--                 },
-	--             },
-	--         })
-
-	--         create_augroup("http", function()
-	--             vim.keymap.set("n", "<C-Return>", "<Plug>RestNvim", { buffer = true, silent = true })
-	--         end)
-	--     end,
-	-- },
-
 	-- Java support
 	{ "mfussenegger/nvim-jdtls" },
 
@@ -117,11 +110,30 @@ require("lazy").setup({
 	},
 
 	{
-		"lunacookies/vim-colors-xcode",
+		"miikanissi/modus-themes.nvim",
 		config = function()
-			vim.cmd("colorscheme xcodehc")
+            require("modus-themes").setup {
+                style = "auto",
+                -- variant = "tinted",
+                -- variant = "deuteranopia",
+            }
+            vim.o.background = "dark"
+			vim.cmd("colorscheme modus")
 		end,
 	},
+
+    {
+        "nvim-lualine/lualine.nvim",
+        config = function()
+            require('lualine').setup {
+                options = {
+                    icons_enabled = false,
+                    component_separators = { left = ' ', right = ' '},
+                    section_separators = { left = ' ', right = ' '},
+                }
+            }
+        end
+    },
 })
 
 -- Vim options {{{
@@ -177,6 +189,7 @@ vim.wo.number = false
 -- Keybinds {{{
 vim.g.mapleader = " "
 
+vim.keymap.set("n", "<C-a>", ":A<CR>", { silent = true })
 vim.keymap.set("n", "<C-p>", ":Telescope find_files<CR>", { silent = true })
 vim.keymap.set("n", "<C-b>", ":Telescope buffers<CR>", { silent = true })
 vim.keymap.set("n", "<Leader>fg", ":Telescope live_grep<CR>", { silent = true })
@@ -214,6 +227,7 @@ vim.keymap.set("n", "<Leader>bd", ":bd<CR>", { silent = true })
 vim.keymap.set("n", "<Leader>bcc", ":%bd|e#<CR>", { silent = true })
 
 vim.keymap.set("n", "<Leader>gs", ":LazyGitCurrentFile<CR>", { silent = true })
+vim.keymap.set("n", "<Leader>gb", ":GitBlameToggle<CR>", { silent = true })
 
 vim.keymap.set("n", "<A-p>", "<nop>", { silent = true })
 
@@ -223,6 +237,20 @@ vim.keymap.set("n", "<A-r>", ":Make<CR>", { silent = true })
 
 vim.keymap.set("n", "<Leader>tt", ":TestSuite<CR>", { silent = true })
 vim.keymap.set("n", "<Leader>tf", ":TestFile<CR>", { silent = true })
+
+vim.keymap.set("n", "<Leader>dd", require("dapui").toggle, { silent = true })
+vim.keymap.set("n", "<Leader>db", require("dap").toggle_breakpoint, { silent = true })
+vim.keymap.set("n", "<Leader>dc", require("dap").continue, { silent = true })
+vim.keymap.set("n", "<Leader>dn", require("dap").step_over, { silent = true })
+vim.keymap.set("n", "<Leader>dt", require("jdtls").test_nearest_method, { silent = true })
+vim.keymap.set("n", "<Leader>du", ":JdtUpdateDebugConfig<CR>", { silent = true })
+
+vim.keymap.set("n", "<Leader>en", function()
+    vim.diagnostic.goto_next({ severity = vim.diagnostic.severity.ERROR, wrap = false })
+end, { silent = true })
+vim.keymap.set("n", "<Leader>ep", function()
+    vim.diagnostic.goto_prev({ severity = vim.diagnostic.severity.ERROR, wrap = false })
+end, { silent = true })
 
 -- Disable ex mode binding
 vim.cmd([[map Q <Nop>]])
@@ -315,24 +343,6 @@ vim.api.nvim_create_autocmd("LspAttach", {
 		client.server_capabilities.semanticTokensProvider = nil
 	end,
 })
-
-local servers = {
-	["jdtls"] = {
-		settings = {
-			java = {
-				signatureHelp = { enabled = true },
-			},
-		},
-	},
-}
-
-local capabilities = vim.lsp.protocol.make_client_capabilities()
--- Enable file watcher support for LSP
-capabilities.workspace.didChangeWatchedFiles.dynamicRegistration = true
-for lsp, settings in pairs(servers) do
-	settings.capabilities = capabilities
-	lspconfig[lsp].setup(settings)
-end
 -- }}}
 
 -- Nvim-cmp {{{
@@ -357,10 +367,6 @@ cmp.setup({
 		{ name = "vsnip" },
 	}),
 })
--- }}}
-
--- Color scheme {{{
-vim.cmd([[set background=dark]])
 -- }}}
 
 -- Small quality of life stuff {{{
@@ -425,10 +431,6 @@ vim.cmd([[
 ]])
 -- }}}
 
--- Completion {{{
--- vim.cmd [[inoremap <silent> <C-n> <C-x><C-o>]]
--- }}}
-
 -- Treesitter {{{
 require("nvim-treesitter.configs").setup({
 	-- Install parsers synchronously (only applied to `ensure_installed`)
@@ -457,11 +459,7 @@ require("nvim-treesitter.configs").setup({
 		enable = true, -- false will disable the whole extension
 		disable = {
 			-- "cpp",
-		}, -- list of language that will be disabled
-		-- Setting this to true will run `:h syntax` and tree-sitter at the same time.
-		-- Set this to `true` if you depend on 'syntax' being enabled (like for indentation).
-		-- Using this option may slow down your editor, and you may see some duplicate highlights.
-		-- Instead of true it can also be a list of languages
+		},
 		additional_vim_regex_highlighting = false,
 	},
 	indent = {
