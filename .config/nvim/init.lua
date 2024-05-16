@@ -11,33 +11,13 @@ if not vim.loop.fs_stat(lazypath) then
 	})
 end
 vim.opt.rtp:prepend(lazypath)
-
-local function create_augroup(filetype, callback)
-	if type(filetype) == "table" then
-		for _, ft in ipairs(filetype) do
-			create_augroup(ft, callback)
-		end
-	else
-		local group = vim.api.nvim_create_augroup(filetype .. "_augroup", {})
-		vim.api.nvim_create_autocmd({ "FileType" }, {
-			pattern = filetype,
-			callback = callback,
-			group = group,
-		})
-	end
-end
 -- }}}
 
 require("lazy").setup({
 	"williamboman/mason.nvim",
 	"williamboman/mason-lspconfig.nvim",
 	"neovim/nvim-lspconfig",
-	{
-        "mfussenegger/nvim-dap",
-        config = function()
-
-        end
-    },
+    "mfussenegger/nvim-dap",
     {
         "rcarriga/nvim-dap-ui",
         dependencies = { "mfussenegger/nvim-dap", "nvim-neotest/nvim-nio" },
@@ -49,9 +29,7 @@ require("lazy").setup({
     {
         "f-person/git-blame.nvim",
         config = function()
-            require("gitblame").setup({
-                enabled = false
-            })
+            require("gitblame").setup({ enabled = false })
         end
     },
 
@@ -72,14 +50,13 @@ require("lazy").setup({
 	"tpope/vim-dispatch",
 	"tpope/vim-vinegar",
 	"tpope/vim-projectionist",
-	"tpope/vim-commentary",
 	"ntpeters/vim-better-whitespace", -- highlight trailing whitespace
 	{
 		"windwp/nvim-autopairs",
 		event = "InsertEnter",
 		opts = {
-			disable_filetype = { "TelescopePrompt", "vim", "clojure" },
-		}, -- this is equalent to setup({}) function
+			disable_filetype = { "TelescopePrompt", "vim" },
+		},
 	},
 
 	{
@@ -94,7 +71,27 @@ require("lazy").setup({
 	{ "mfussenegger/nvim-jdtls" },
 
 	"nvim-lua/plenary.nvim",
-	"nvim-telescope/telescope.nvim",
+	{
+        "nvim-telescope/telescope.nvim",
+        config = function()
+            local actions = require("telescope.actions")
+            require("telescope").setup({
+                defaults = {
+                    preview = true,
+                    mappings = {
+                        i = {
+                            ["<esc>"] = actions.close,
+                        },
+                    },
+                    layout_strategy = "horizontal",
+                    layout_config = {
+                        height = { padding = 0 },
+                        width = { padding = 0 },
+                    },
+                },
+            })
+        end,
+    },
 
 	{
 		"stevearc/dressing.nvim",
@@ -137,8 +134,6 @@ require("lazy").setup({
 })
 
 -- Vim options {{{
-vim.o.termguicolors = true
-
 vim.o.exrc = true
 vim.o.showcmd = true
 vim.o.mouse = "a"
@@ -181,7 +176,7 @@ vim.o.pumheight = 8 -- Completion menu height
 vim.o.signcolumn = "yes:1" -- Configure minimum gutter width
 
 vim.wo.number = false
--- vim.wo.cursorline = true
+vim.wo.cursorline = true
 -- vim.wo.foldmethod = 'marker'
 -- vim.wo.foldlevel = 0
 -- }}}
@@ -256,20 +251,6 @@ end, { silent = true })
 vim.cmd([[map Q <Nop>]])
 -- }}}
 
--- Telescope {{{
-local actions = require("telescope.actions")
-require("telescope").setup({
-	defaults = {
-		preview = true,
-		mappings = {
-			i = {
-				["<esc>"] = actions.close,
-			},
-		},
-	},
-})
--- }}}
-
 -- LSP {{{
 vim.diagnostic.config({
 	virtual_text = false,
@@ -285,62 +266,20 @@ require("mason-lspconfig").setup()
 local lspconfig = require("lspconfig")
 local lsp_configs = require("lspconfig.configs")
 
-local function format_buffer(bufnr)
-	local bufnr = bufnr or 0
-	vim.lsp.buf.format({
-		async = true,
-		filter = function(client)
-			if #vim.lsp.get_active_clients({ bufnr = bufnr, name = "null-ls" }) >= 1 then
-				-- If null-ls is active, don't format with other clients
-				return client.name == "null-ls"
-			end
-			return true
-		end,
-	})
-end
-
+-- LSP key bindings
 vim.api.nvim_create_autocmd("LspAttach", {
 	group = vim.api.nvim_create_augroup("UserLspConfig", {}),
 	callback = function(ev)
-		-- buf_set_option('omnifunc', 'v:lua.vim.lsp.omnifunc')
-
 		local opts = { remap = false, silent = true, buffer = ev.bufnr }
-
-		vim.keymap.set("n", "K", function()
-			vim.lsp.buf.hover()
-		end, opts)
-		vim.keymap.set("n", "<c-]>", function()
-			vim.lsp.buf.definition()
-		end, opts)
-		vim.keymap.set("n", "<leader>mf", format_buffer, opts)
-		vim.keymap.set("n", "<leader>mr", function()
-			vim.lsp.buf.rename()
-		end, opts)
+		vim.keymap.set("n", "K", vim.lsp.buf.hover, opts)
+		vim.keymap.set("n", "<c-]>", vim.lsp.buf.definition, opts)
+		vim.keymap.set("n", "<leader>mf", vim.lsp.buf.format, opts)
+		vim.keymap.set("n", "<leader>mr", vim.lsp.buf.rename, opts)
 		vim.keymap.set("n", "<leader>mR", ":LspRestart<CR>", opts)
-		vim.keymap.set("n", "<M-CR>", function()
-			vim.lsp.buf.code_action()
-		end, opts)
-		vim.keymap.set("i", "<M-CR>", function()
-			vim.lsp.buf.code_action()
-		end, opts)
-		vim.keymap.set("n", "<leader>mc", ":Copilot toggle<CR>", opts)
-		vim.keymap.set("n", "[d", function()
-			vim.diagnostic.goto_prev()
-		end, opts)
-		vim.keymap.set("n", "]d", function()
-			vim.diagnostic.goto_next()
-		end, opts)
-		vim.keymap.set("n", "<C-y>", function()
-			vim.diagnostic.open_float()
-		end, opts)
-		vim.keymap.set("i", "<C-h>", function()
-			vim.lsp.buf.signature_help()
-		end, opts)
-
-		local client = vim.lsp.get_client_by_id(ev.data.client_id)
-
-		-- Disable semantic highlighting
-		client.server_capabilities.semanticTokensProvider = nil
+		vim.keymap.set("n", "<M-CR>", vim.lsp.buf.code_action, opts)
+		vim.keymap.set("i", "<M-CR>", vim.lsp.buf.code_action, opts)
+		vim.keymap.set("n", "<C-y>", vim.diagnostic.open_float, opts)
+		vim.keymap.set("i", "<C-h>", vim.lsp.buf.signature_help, opts)
 	end,
 })
 -- }}}
@@ -456,10 +395,7 @@ require("nvim-treesitter.configs").setup({
 	-- ignore_install = { "javascript" }, -- List of parsers to ignore installing
 
 	highlight = {
-		enable = true, -- false will disable the whole extension
-		disable = {
-			-- "cpp",
-		},
+		enable = true,
 		additional_vim_regex_highlighting = false,
 	},
 	indent = {
@@ -468,8 +404,6 @@ require("nvim-treesitter.configs").setup({
 			"c",
 			"cpp",
 			"sql",
-			-- "html",
-			-- "htmldjango",
 		},
 	},
 	incremental_selection = {
@@ -477,7 +411,6 @@ require("nvim-treesitter.configs").setup({
 		keymaps = {
 			init_selection = "<A-n>", -- set to `false` to disable one of the mappings
 			node_incremental = "<A-n>",
-			-- scope_incremental = "grc",
 			node_decremental = "<A-p>",
 		},
 	},

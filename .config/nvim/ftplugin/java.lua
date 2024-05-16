@@ -10,32 +10,29 @@ local config = {
             home .. "/.local/share/nvim/mason/packages/jdtls/lombok.jar"
         ),
     },
-    root_dir = vim.fs.dirname(vim.fs.find({'gradlew', '.git', 'mvnw'}, { upward = true })[1]),
-    init_options = {
-        bundles = bundles,
-    },
+    root_dir = vim.fs.dirname(vim.fs.find(
+        {'gradlew', '.git', 'mvnw'},
+        { upward = true }
+    )[1]),
+    init_options = { bundles = bundles },
 }
 
 require("jdtls").start_or_attach(config)
--- require("jdtls.dap").setup_dap_main_class_configs()
 
-vim.keymap.set("n", "<leader>mi", function()
-    require("jdtls").organize_imports()
-end)
-
-vim.keymap.set("n", "<leader>D", function()
-    require("jdtls.dap").setup_dap_main_class_configs()
-end)
-vim.keymap.set("n", "<leader>tc", function()
-    require("jdtls").test_class()
-end)
-vim.keymap.set("n", "<leader>tm", function()
-    require("jdtls").test_nearest_method()
-end)
+vim.keymap.set("n", "<leader>mi", require("jdtls").organize_imports)
+vim.keymap.set("n", "<leader>D", require("jdtls.dap").setup_dap_main_class_configs)
+vim.keymap.set("n", "<leader>tc", require("jdtls").test_class)
+vim.keymap.set("n", "<leader>tm", require("jdtls").test_nearest_method)
 
 vim.g.projectionist_heuristics = {
     ["pom.xml"] = {
-      ["src/main/java/*.java"] = { alternate = "src/test/java/{}Test.java", type = "source" },
-      ["src/test/java/*Test.java"] = { alternate = "src/main/java/{}.java", type = "test" },
+        ["src/main/java/*.java"] = {
+            alternate = "src/test/java/{}Test.java",
+            type = "source",
+        },
+        ["src/test/java/*Test.java"] = {
+            alternate = "src/main/java/{}.java",
+            type = "test",
+        },
     },
 }
