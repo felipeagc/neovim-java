@@ -70,6 +70,18 @@ require("lazy").setup({
 	-- Java support
 	{ "mfussenegger/nvim-jdtls" },
 
+    -- Salesforce support
+    {
+        "jonathanmorris180/salesforce.nvim",
+        dependencies = {
+            "nvim-lua/plenary.nvim",
+            "nvim-treesitter/nvim-treesitter",
+        },
+        config = function()
+            require("salesforce").setup({})
+        end,
+    },
+
 	"nvim-lua/plenary.nvim",
 	{
         "nvim-telescope/telescope.nvim",
@@ -266,6 +278,14 @@ require("mason-lspconfig").setup()
 local lspconfig = require("lspconfig")
 local lsp_configs = require("lspconfig.configs")
 
+-- Salesforce language server
+lspconfig.apex_ls.setup {
+    apex_jar_path = "/home/wsl/.apexls/extension/dist/apex-jorje-lsp.jar",
+    apex_enable_semantic_errors = true,
+    apex_enable_completion_statistics = false,
+    filetypes = { "apex", "apexcode" },
+}
+
 -- LSP key bindings
 vim.api.nvim_create_autocmd("LspAttach", {
 	group = vim.api.nvim_create_augroup("UserLspConfig", {}),
@@ -380,6 +400,7 @@ require("nvim-treesitter.configs").setup({
 	auto_install = true,
 
 	ensure_installed = {
+		"apex",
 		"bash",
 		"css",
 		"html",
@@ -388,6 +409,7 @@ require("nvim-treesitter.configs").setup({
 		"lua",
 		"make",
 		"markdown",
+		"soql",
 		"tsx",
 		"typescript",
 		"yaml",
@@ -420,5 +442,7 @@ require("nvim-treesitter.configs").setup({
 -- Other filetypes {{{
 vim.cmd([[
 autocmd BufRead,BufNewFile Dockerfile.* set filetype=dockerfile
+autocmd BufRead,BufNewFile *.apex set filetype=apex
+autocmd BufRead,BufNewFile *.soql set filetype=soql
 ]])
 -- }}}
