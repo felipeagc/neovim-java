@@ -1,13 +1,21 @@
 local home = vim.fn.expand("$HOME")
-local bundles = { vim.fn.glob(home .. "/.local/share/nvim/mason/packages/java-debug-adapter/extension/server/com.microsoft.java.debug.plugin-*.jar", 1) }
-vim.list_extend(bundles, vim.split(vim.fn.glob(home .. "/.local/share/nvim/mason/packages/java-test/extension/server/*.jar", 1), "\n"))
+local bundles = {}
+local bundles = { vim.fn.glob(vim.fn.stdpath("data") .. "/mason/packages/java-debug-adapter/extension/server/com.microsoft.java.debug.plugin-*.jar", 1) }
+vim.list_extend(bundles, vim.split(vim.fn.glob(vim.fn.stdpath("data") .. "/mason/packages/java-test/extension/server/*.jar", 1), "\n"))
+
+local launcher_path = vim.fn.glob(vim.fn.stdpath("data") .. "/mason/packages/jdtls/plugins/org.eclipse.equinox.launcher_*.jar", 1)
+
+local project_name = vim.fn.fnamemodify(vim.fn.getcwd(), ':p:h:t')
+local workspace_dir = home.."/.jdtls-data/" .. project_name
 
 local config = {
     cmd = {
-        home .. "/.local/share/nvim/mason/bin/jdtls",
+        vim.fn.stdpath("data") .. "/mason/bin/jdtls",
+        "-configuration",
+        vim.fn.stdpath("data") .. "/mason/packages/jdtls/config_linux",
         "--jvm-arg=" .. string.format(
             "-javaagent:%s",
-            home .. "/.local/share/nvim/mason/packages/jdtls/lombok.jar"
+            vim.fn.stdpath("data") .. "/mason/packages/jdtls/lombok.jar"
         ),
     },
     root_dir = vim.fs.dirname(vim.fs.find(

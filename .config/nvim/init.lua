@@ -48,7 +48,6 @@ require("lazy").setup({
 	"tpope/vim-abolish",
 	"tpope/vim-unimpaired",
 	"tpope/vim-dispatch",
-	"tpope/vim-vinegar",
 	"tpope/vim-projectionist",
 	"ntpeters/vim-better-whitespace", -- highlight trailing whitespace
 	{
@@ -132,13 +131,23 @@ require("lazy").setup({
 	},
 
     {
+        "stevearc/oil.nvim",
+        config = function()
+            require("oil").setup({
+                default_file_explorer = true,
+            })
+            vim.keymap.set("n", "-", "<CMD>Oil<CR>", { desc = "Open parent directory" })
+        end,
+    },
+    {
         "nvim-lualine/lualine.nvim",
+        dependencies = { "nvim-tree/nvim-web-devicons" },
         config = function()
             require('lualine').setup {
                 options = {
-                    icons_enabled = false,
-                    component_separators = { left = ' ', right = ' '},
-                    section_separators = { left = ' ', right = ' '},
+                    icons_enabled = true,
+                    component_separators = { left = '', right = '' },
+                    section_separators = { left = "", right = "" },
                 }
             }
         end
