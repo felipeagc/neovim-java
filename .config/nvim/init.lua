@@ -117,18 +117,27 @@ require("lazy").setup({
 		end,
 	},
 
-	{
-		"miikanissi/modus-themes.nvim",
-		config = function()
-            require("modus-themes").setup {
-                style = "auto",
-                -- variant = "tinted",
-                -- variant = "deuteranopia",
-            }
-            vim.o.background = "dark"
-			vim.cmd("colorscheme modus")
-		end,
-	},
+	-- {
+	-- 	"sainnhe/gruvbox-material",
+	-- 	config = function()
+	--            vim.g.gruvbox_material_enable_italic = false
+	--            vim.o.background = "dark"
+	-- 		vim.cmd.colorscheme("gruvbox-material")
+	-- 	end,
+	-- },
+    {
+        "neanias/everforest-nvim",
+        version = false,
+        lazy = false,
+        priority = 1000, -- make sure to load this before all the other start plugins
+        -- Optional; default configuration will be used if setup isn't called.
+        config = function()
+            require("everforest").setup({
+                background = "hard"
+            })
+            vim.cmd.colorscheme("everforest")
+        end,
+    },
 
     {
         "stevearc/oil.nvim",
@@ -353,20 +362,17 @@ vim.cmd([[
 ]])
 
 -- Create non-existing directories before writing buffer
-vim.cmd([[
-    function! Mkdir()
-        let dir = expand('%:p:h')
-
-        if !isdirectory(dir)
-            call mkdir(dir, 'p')
-            echo 'Created non-existing directory: '.dir
-        endif
-    endfunction
-
-    augroup on_buffer_write
-        autocmd BufWritePre * call Mkdir()
-    augroup END
-]])
+vim.api.nvim_create_autocmd("BufWritePre", {
+    callback = function()
+        if vim.tbl_contains({ "oil" }, vim.bo.ft) then
+            return
+        end
+        local dir = vim.fn.expand("<afile>:p:h")
+        if vim.fn.isdirectory(dir) == 0 then
+            vim.fn.mkdir(dir, "p")
+        end
+    end,
+})
 
 -- Open help vertically
 vim.cmd([[
